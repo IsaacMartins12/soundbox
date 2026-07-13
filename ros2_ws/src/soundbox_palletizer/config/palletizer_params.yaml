@@ -1,0 +1,25 @@
+coordinate_publisher:
+  ros__parameters:
+    # URL do backend SoundBox (fora do container, no host)
+    backend_url: "http://host.docker.internal:5000"
+    
+    # Altura de pega (Z acima da caixa para approach)
+    pick_height_offset: 10.0  # cm acima do ponto de pega
+    
+    # Altura de segurança para movimentação
+    safe_height: 80.0  # cm - altura para mover entre posições
+    
+    # Velocidade do robô (fração da velocidade máxima)
+    velocity_scaling: 0.3
+    
+    # Posição da esteira de entrada (onde o robô pega a caixa)
+    pick_position:
+      x: 0.0
+      y: -80.0  # 80cm à frente do pallet
+      z: 50.0   # altura da esteira
+    
+    # Offset do pallet em relação à base do robô
+    pallet_offset:
+      x: -50.0  # centro do pallet em X
+      y: 50.0   # pallet ao lado
+      z: 0.0    # nível do chão
