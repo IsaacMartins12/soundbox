@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SoundBox Pallet Optimizer</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>SoundBox Pallet Optimizer</h1>
+            <p>Otimização de carregamento de paletes com visualização 3D</p>
+        </div>
+    </header>
+
+    <main class="container">
+        <!-- Banco de Modelos de Caixas -->
+        <section id="box-models-section">
+            <div class="card">
+                <h2>Modelos de Caixas</h2>
+                <div class="input-row">
+                    <select id="box-model-select">
+                        <option value="">-- Selecione para carregar --</option>
+                    </select>
+                    <button id="load-box-model-btn" class="btn-secondary">Carregar</button>
+                    <button id="manage-box-models-btn" class="btn-secondary">Gerenciar</button>
+                </div>
+
+                <!-- Formulário de cadastro (oculto) -->
+                <div id="box-model-form" class="hidden" style="margin-top:15px; padding:10px; border:1px solid #ddd; border-radius:5px;">
+                    <h3 id="box-form-title">Novo Modelo de Caixa</h3>
+                    <input type="hidden" id="bm-id" value="">
+                    <div class="input-row">
+                        <label>Nome:
+                            <input type="text" id="bm-name" placeholder="Ex: 24MS500-B">
+                        </label>
+                        <label>Código:
+                            <input type="text" id="bm-code" placeholder="Ex: BOX-A">
+                        </label>
+                        <label>Tipo:
+                            <select id="bm-type">
+                                <option value="regular">Retangular</option>
+                                <option value="l-shape">Formato L</option>
+                            </select>
+                        </label>
+                    </div>
+                    <div id="bm-regular-fields">
+                        <div class="input-row">
+                            <label>Comp X: <input type="number" id="bm-sizex" step="0.1"></label>
+                            <label>Larg Y: <input type="number" id="bm-sizey" step="0.1"></label>
+                            <label>Alt Z: <input type="number" id="bm-sizez" step="0.1"></label>
+                        </div>
+                    </div>
+                    <div id="bm-l-fields" class="hidden">
+                        <div class="input-row">
+                            <label>Comp Total: <input type="number" id="bm-comp-total" step="0.1"></label>
+                            <label>Largura: <input type="number" id="bm-largura" step="0.1"></label>
+                            <label>Alt Vertical: <input type="number" id="bm-alt-vertical" step="0.1"></label>
+                        </div>
+                        <div class="input-row">
+                            <label>Alt Perpendicular: <input type="number" id="bm-alt-perp" step="0.1"></label>
+                            <label>Comp Braço: <input type="number" id="bm-comp-braco" step="0.1"></label>
+                            <label>Orientação:
+                                <select id="bm-l-orientation">
+                                    <option value="vertical">Em pé (vertical)</option>
+                                    <option value="horizontal">Deitada (horizontal)</option>
+                                </select>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="input-row">
+                        <label>Peso: <input type="number" id="bm-weight" step="0.1"></label>
+                        <label>Resistência: <input type="number" id="bm-strength" value="10"></label>
+                        <label>Quantidade: <input type="number" id="bm-quantity" value="10" min="1"></label>
+                        <label>Face no chão:
+                            <select id="bm-pallet-face">
+                                <option value="xy">X×Y (deitada)</option>
+                                <option value="xz">X×Z (em pé, Y é alt)</option>
+                                <option value="yz">Y×Z (em pé, X é alt)</option>
+                            </select>
+                        </label>
+                        <label>Intertravamento:
+                            <select id="bm-interlocking">
+                                <option value="mirror">Espelho 180°</option>
+                                <option value="alternate">Orientação alternada</option>
+                            </select>
+                        </label>
+                    </div>
+                    <div class="input-row">
+                        <label>Pallet X: <input type="number" id="bm-pallet-sizex" value="100" step="0.1"></label>
+                        <label>Pallet Y: <input type="number" id="bm-pallet-sizey" value="120" step="0.1"></label>
+                        <label>Pallet Z: <input type="number" id="bm-pallet-sizez" value="200" step="0.1"></label>
+                    </div>
+                    <div class="input-row">
+                        <label>Peso Máx Pallet: <input type="number" id="bm-pallet-weight" value="1200" step="0.1"></label>
+                        <label>Overhang: <input type="number" id="bm-overhang" value="5" step="0.1"></label>
+                        <label>Notas: <input type="text" id="bm-notes" placeholder="Descrição opcional"></label>
+                    </div>
+                    <div class="input-row">
+                        <button id="bm-save-btn" class="btn-primary">Salvar Modelo</button>
+                        <button id="bm-cancel-btn" class="btn-secondary">Cancelar</button>
+                        <button id="bm-delete-btn" class="btn-secondary btn-danger hidden">Excluir</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="inputs">
+            <div class="card">
+                <h2>Configurações</h2>
+
+                <!-- Sistema de Unidades -->
+                <div class="form-group">
+                    <h3>Sistema de Unidades</h3>
+                    <div class="input-row">
+                        <label>
+                            <select id="unit-system">
+                                <option value="metric">Métrico (cm / kg)</option>
+                                <option value="imperial">Imperial (inches / lbs)</option>
+                            </select>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Dimensões do Palete -->
+                <div class="form-group">
+                    <h3>Palete (<span class="unit-length">cm</span>)</h3>
+                    <div class="input-row">
+                        <label>Comprimento (X):
+                            <input type="number" id="p-sizex" value="120" step="0.1">
+                        </label>
+                        <label>Largura (Y):
+                            <input type="number" id="p-sizey" value="100" step="0.1">
+                        </label>
+                        <label>Altura Máx (Z):
+                            <input type="number" id="p-sizez" value="150" step="0.1">
+                        </label>
+                    </div>
+                    <div class="input-row">
+                        <label>Peso Máximo (<span class="unit-weight">kg</span>):
+                            <input type="number" id="p-max-weight" value="1000" step="0.1">
+                        </label>
+                        <label>Saliência permitida (<span class="unit-length">cm</span>):
+                            <input type="number" id="p-overhang" value="5" step="0.1" min="0" title="Quanto a caixa pode ultrapassar a borda do palete">
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Tipo de Caixa -->
+                <div class="form-group">
+                    <h3>Tipo de Caixa</h3>
+                    <div class="input-row">
+                        <label>
+                            <select id="box-type">
+                                <option value="regular">Retangular (normal)</option>
+                                <option value="l-shape">Formato em L</option>
+                            </select>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Caixa em L (oculto por padrão) -->
+                <div class="form-group hidden" id="l-box-section">
+                    <h3>Caixa em L - em pé (<span class="unit-length">cm</span>)</h3>
+                    <p class="hint">A face (Comp × Larg) fica no chão. Altura = soma das duas medidas verticais.</p>
+                    <div class="input-row">
+                        <label>Comprimento (chão):
+                            <input type="number" id="l-comp-total" value="91.4" step="0.1">
+                        </label>
+                        <label>Largura (chão):
+                            <input type="number" id="l-largura" value="26.3" step="0.1">
+                        </label>
+                    </div>
+                    <div class="input-row">
+                        <label>Altura vertical:
+                            <input type="number" id="l-alt-vertical" value="43.5" step="0.1">
+                        </label>
+                        <label>Altura perpendicular:
+                            <input type="number" id="l-alt-perpendicular" value="14.1" step="0.1">
+                        </label>
+                    </div>
+                    <div class="input-row">
+                        <label>Comp. do braço:
+                            <input type="number" id="l-comp-braco" value="45.7" step="0.1" title="Comprimento do braço do L (parte que não ocupa o comprimento total)">
+                        </label>
+                        <label>Orientação L:
+                            <select id="l-orientation">
+                                <option value="vertical">Em pé (vertical)</option>
+                                <option value="horizontal">Deitada (horizontal)</option>
+                            </select>
+                        </label>
+                    </div>
+                    <div class="input-row">
+                        <label>Peso (<span class="unit-weight">kg</span>):
+                            <input type="number" id="l-weight" value="8.0" step="0.1">
+                        </label>
+                        <label>Quantidade:
+                            <input type="number" id="l-quantity" value="20" min="1">
+                        </label>
+                    </div>
+                    <p class="hint">2 caixas L encaixadas = retângulo de <span id="l-par-info">91.4 × 26.3 × 57.6 cm</span></p>
+                </div>
+
+                <!-- Caixas Retangulares -->
+                <div class="form-group" id="regular-box-section">
+                    <h3>Caixas</h3>
+                    <div id="cases-container">
+                        <div class="case-row" data-index="0">
+                            <div class="input-row">
+                                <label>Código:
+                                    <input type="text" class="case-code" value="BOX-A">
+                                </label>
+                                <label>Comp. (<span class="unit-length">cm</span>):
+                                    <input type="number" class="case-sizex" value="30" step="0.1">
+                                </label>
+                                <label>Larg. (<span class="unit-length">cm</span>):
+                                    <input type="number" class="case-sizey" value="25" step="0.1">
+                                </label>
+                                <label>Alt. (<span class="unit-length">cm</span>):
+                                    <input type="number" class="case-sizez" value="20" step="0.1">
+                                </label>
+                            </div>
+                            <div class="input-row">
+                                <label>Peso (<span class="unit-weight">kg</span>):
+                                    <input type="number" class="case-weight" value="2.5" step="0.1">
+                                </label>
+                                <label>Quantidade:
+                                    <input type="number" class="case-quantity" value="40" min="1">
+                                </label>
+                                <label>Resistência:
+                                    <input type="number" class="case-strength" value="10" min="1" title="Quantas caixas aguenta em cima">
+                                </label>
+                                <label>Face no chão:
+                                    <select class="case-pallet-face">
+                                        <option value="xy">X×Y (deitada)</option>
+                                        <option value="xz">X×Z (em pé, Y é alt)</option>
+                                        <option value="yz">Y×Z (em pé, X é alt)</option>
+                                    </select>
+                                </label>
+                                <label>Intertravamento:
+                                    <select class="case-interlocking">
+                                        <option value="mirror">Espelho 180°</option>
+                                        <option value="alternate">Orientação alternada</option>
+                                    </select>
+                                </label>
+                                <button class="btn-remove-case" title="Remover caixa">&times;</button>
+                            </div>
+                        </div>
+                    </div>
+                    <button id="add-case-btn" class="btn-secondary">+ Adicionar tipo de caixa</button>
+                </div>
+
+                <button id="calculate-btn" class="btn-primary">Calcular Empacotamento</button>
+            </div>
+        </section>
+
+        <!-- Resultados -->
+        <section id="results" class="hidden">
+            <div id="packing-warning" class="warning-banner hidden"></div>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <span class="label">Total de Caixas</span>
+                    <span id="stat-total" class="value">0</span>
+                </div>
+                <div class="stat-card">
+                    <span class="label">Utilização de Volume</span>
+                    <span id="stat-volume" class="value">0%</span>
+                </div>
+                <div class="stat-card">
+                    <span class="label">Peso Total</span>
+                    <span id="stat-weight" class="value">0</span>
+                </div>
+                <div class="stat-card">
+                    <span class="label">Utilização de Peso</span>
+                    <span id="stat-weight-util" class="value">0%</span>
+                </div>
+            </div>
+
+            <!-- Visualização 3D -->
+            <div id="visualization-container">
+                <div id="viz-controls">
+                    <button id="reset-view" class="btn-small">Reset Vista</button>
+                    <button id="export-csv-btn" class="btn-small">Exportar CSV</button>
+                </div>
+                <canvas id="pallet-canvas"></canvas>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2026 SoundBox Pallet Optimizer</p>
+        </div>
+    </footer>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="js/visualization.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
