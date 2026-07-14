@@ -5,14 +5,18 @@ services:
     build: .
     container_name: soundbox_ros2
     privileged: true
-    network_mode: host
     environment:
-      - DISPLAY=host.docker.internal:0
+      - DISPLAY=host.docker.internal:0.0
+      - LIBGL_ALWAYS_INDIRECT=1
       - QT_X11_NO_MITSHM=1
       - ROS_DOMAIN_ID=0
     volumes:
       - ./src:/ros2_ws/src
-      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+    ports:
+      - "8765:8765"
+      - "9090:9090"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     stdin_open: true
     tty: true
     command: /bin/bash
