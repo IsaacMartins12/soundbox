@@ -15,6 +15,7 @@ services:
     ports:
       - "8765:8765"
       - "9090:9090"
+      - "9091:9091"
     extra_hosts:
       - "host.docker.internal:host-gateway"
     stdin_open: true

@@ -728,13 +728,155 @@ HTML_TEMPLATE = """
             setJointAngles(HOME_ANGLES);
         }
 
-        function startPalletizing() {
+        async function startPalletizing() {
             if (animating || !palletData || palletData.cases.length === 0) return;
             animating = true;
             currentBoxIndex = 0;
             document.getElementById('startBtn').disabled = true;
-            document.getElementById('status').innerHTML = '<strong>Paletizando...</strong>';
-            runPickAndPlaceCycle();
+            document.getElementById('status').innerHTML = '<strong>Solicitando planejamento MoveIt2...</strong>';
+
+            // Solicitar planejamento ao MoveIt Planner
+            try {
+                const planResponse = await fetch('http://localhost:9091/api/plan', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({cases: palletData.cases, pallet: palletData.pallet})
+                });
+                const planData = await planResponse.json();
+
+                if (planData.status !== 'success') {
+                    document.getElementById('status').innerHTML = 'Erro no planejamento!';
+                    animating = false;
+                    document.getElementById('startBtn').disabled = false;
+                    return;
+                }
+
+                document.getElementById('status').innerHTML = `<strong>Executando ${planData.total_boxes} caixas (${planData.total_waypoints} waypoints)</strong>`;
+
+                // Executar trajetórias planejadas
+                await executePlannedTrajectories(planData.trajectories);
+
+            } catch(e) {
+                console.error('Erro ao planejar:', e);
+                document.getElementById('status').innerHTML = 'Erro de conexão com planner. Usando animação local.';
+                // Fallback: usar animação local (IK simplificado)
+                runPickAndPlaceCycle();
+            }
+        }
+
+        async function executePlannedTrajectories(trajectories) {
+            for (let i = 0; i < trajectories.length; i++) {
+                if (!animating) break;
+
+                const traj = trajectories[i];
+                const box = boxes[i];
+                if (!box) break;
+
+                currentBoxIndex = i;
+
+                // Posicionar caixa na esteira antes de pegar
+                box.mesh.visible = true;
+                box.mesh.position.set(CONVEYOR_POS.x, CONVEYOR_POS.y + 0.53, CONVEYOR_POS.z);
+
+                // Executar sequência de waypoints
+                for (let w = 0; w < traj.waypoints.length; w++) {
+                    if (!animating) break;
+
+                    const wp = traj.waypoints[w];
+                    const duration = wp.duration * 1000;
+                    const target = new THREE.Vector3(wp.position.x, wp.position.y, wp.position.z);
+
+                    if (wp.label === 'grab') {
+                        // Pegar: caixa gruda no gripper
+                        carriedBox = box.mesh;
+                        await sleep(duration);
+                    } else if (wp.label === 'release') {
+                        // Soltar: caixa fica na posição final
+                        carriedBox = null;
+                        // Posição final correta no pallet
+                        const c = box.data;
+                        const pSx = (palletData.pallet.sizex || 100) / 100;
+                        const pSy = (palletData.pallet.sizey || 120) / 100;
+                        const fx = PALLET_POS.x + c.x/100 + c.sizex/200 - pSx/2;
+                        const fy = PALLET_POS.y + 0.13 + c.z/100 + c.sizez/200;
+                        const fz = PALLET_POS.z + c.y/100 + c.sizey/200 - pSy/2;
+                        box.mesh.position.set(fx, fy, fz);
+                        box.placed = true;
+                        box.mesh.material.color.setHex(0xB8845A);
+                        await sleep(duration);
+                    } else {
+                        // Mover gripper para target, caixa segue se presa
+                        await moveGripperSmooth(target, duration);
+                    }
+                }
+
+                // UI
+                const progress = ((i + 1) / trajectories.length) * 100;
+                document.getElementById('progress-bar').style.width = progress + '%';
+                document.getElementById('counter').textContent = `${i+1} / ${trajectories.length} caixas`;
+            }
+
+            finishPalletizing();
+        }
+
+        // Move o gripper suavemente para uma posição, braço acompanha visualmente
+        function moveGripperSmooth(targetPos, duration) {
+            return new Promise(resolve => {
+                const startPos = gripperGroup.getWorldPosition(new THREE.Vector3());
+                const startTime = performance.now();
+
+                function step(now) {
+                    const elapsed = now - startTime;
+                    const t = Math.min(elapsed / duration, 1);
+                    const eased = easeInOutCubic(t);
+
+                    // Posição atual do gripper (interpolada)
+                    const currentPos = new THREE.Vector3().lerpVectors(startPos, targetPos, eased);
+
+                    // Orientar o robô na direção do target
+                    orientRobotToward(currentPos);
+
+                    // Mover caixa se presa ao gripper
+                    if (carriedBox) {
+                        carriedBox.position.copy(currentPos);
+                        carriedBox.position.y -= 0.05; // Offset abaixo do gripper
+                    }
+
+                    if (t < 1) {
+                        requestAnimationFrame(step);
+                    } else {
+                        resolve();
+                    }
+                }
+                requestAnimationFrame(step);
+            });
+        }
+
+        // Orienta visualmente o braço do robô na direção de um ponto
+        function orientRobotToward(worldTarget) {
+            const local = worldTarget.clone().sub(ROBOT_POS);
+
+            // J1: base gira para apontar na direção XZ
+            const j1 = Math.atan2(local.x, -local.z);
+            if (joints[0]) joints[0].rotation.y = j1;
+
+            // Distância e altura relativas
+            const hDist = Math.sqrt(local.x * local.x + local.z * local.z);
+            const vDist = local.y - 0.4; // Relativo ao ombro
+            const reach = Math.min(Math.sqrt(hDist*hDist + vDist*vDist) / 2.2, 0.95);
+
+            // J2: ombro aponta para cima/baixo
+            const elevation = Math.atan2(vDist, hDist);
+            if (joints[1]) joints[1].rotation.z = elevation * 0.5 - 0.3;
+
+            // J3: cotovelo estende com a distância
+            if (joints[2]) joints[2].rotation.z = reach * 0.8;
+
+            // J5: punho compensa para gripper ficar para baixo
+            if (joints[4]) joints[4].rotation.z = -(joints[1].rotation.z + joints[2].rotation.z) - 0.5;
+
+            // Posicionar gripper na posição target (override visual)
+            gripperGroup.getWorldPosition(new THREE.Vector3()); // force update
         }
 
         async function runPickAndPlaceCycle() {
