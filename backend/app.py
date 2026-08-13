@@ -12,6 +12,7 @@ from flask_cors import CORS
 from models.pallet import Pallet
 from algorithms.packer import pack_pallet
 from algorithms.packer_L import pack_pallet_L
+from algorithms.trajectory_generator import generate_trajectory, export_csv as export_trajectory_csv
 from database import init_db, get_all_boxes, get_box, create_box, update_box, delete_box, get_all_pallets, create_pallet, delete_pallet
 
 PRESETS_FILE = os.path.join(os.path.dirname(__file__), "presets.json")
@@ -340,6 +341,119 @@ def delete_preset(preset_id):
         json.dump(presets, f, indent=2, ensure_ascii=False)
 
     return jsonify({"success": True})
+
+
+@app.route("/api/trajectory", methods=["POST"])
+def get_trajectory():
+    """
+    Gera a trajetória de pick-and-place para o robô.
+    
+    Body JSON esperado (mesmo do /api/calculate):
+    {
+        "pallet": {...},
+        "cases": [...],
+        "overhang": 5,
+        "trajectory_config": {  // opcional
+            "pick_position": {"x": 0, "y": -800, "z": 500},
+            "pallet_offset": {"x": 700, "y": 0, "z": 150},
+            "approach_height": 200,
+            "safe_height": 800
+        }
+    }
+    """
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "Body JSON é obrigatório"}), 400
+
+    # Primeiro calcula o packing
+    pallet_data = data.get("pallet")
+    cases_data = data.get("cases")
+    
+    if not pallet_data or not cases_data:
+        return jsonify({"error": "Campos 'pallet' e 'cases' são obrigatórios"}), 400
+
+    try:
+        pallet_size = (
+            float(pallet_data["sizex"]),
+            float(pallet_data["sizey"]),
+            float(pallet_data["sizez"]),
+        )
+        max_weight = float(pallet_data.get("max_weight") or 99999)
+    except (KeyError, ValueError) as e:
+        return jsonify({"error": f"Pallet inválido: {str(e)}"}), 400
+
+    validated_cases = []
+    for i, case in enumerate(cases_data):
+        try:
+            validated_cases.append({
+                "code": case.get("code", f"BOX-{i+1}"),
+                "sizex": float(case["sizex"]),
+                "sizey": float(case["sizey"]),
+                "sizez": float(case["sizez"]),
+                "weight": float(case.get("weight", 0)),
+                "quantity": int(case.get("quantity", 1)),
+                "strength": int(case.get("strength", 100)),
+                "pallet_face": case.get("pallet_face", "xy"),
+                "interlocking_type": case.get("interlocking_type", "mirror"),
+            })
+        except (KeyError, ValueError) as e:
+            return jsonify({"error": f"Caixa inválida: {str(e)}"}), 400
+
+    overhang = float(data.get("overhang", 5.0))
+    pallet = Pallet(pallet_size, max_weight)
+    result = pack_pallet(pallet, validated_cases, overhang=overhang)
+    pallet_result = result.to_dict()
+
+    # Gerar trajetória
+    config = data.get("trajectory_config", None)
+    trajectory = generate_trajectory(pallet_result, config)
+
+    return jsonify(trajectory)
+
+
+@app.route("/api/trajectory/csv", methods=["POST"])
+def get_trajectory_csv():
+    """Gera a trajetória em formato CSV para download."""
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "Body JSON é obrigatório"}), 400
+
+    # Mesmo processamento
+    pallet_data = data.get("pallet")
+    cases_data = data.get("cases")
+    
+    if not pallet_data or not cases_data:
+        return jsonify({"error": "Campos 'pallet' e 'cases' são obrigatórios"}), 400
+
+    pallet_size = (
+        float(pallet_data["sizex"]),
+        float(pallet_data["sizey"]),
+        float(pallet_data["sizez"]),
+    )
+    max_weight = float(pallet_data.get("max_weight") or 99999)
+
+    validated_cases = [{
+        "code": c.get("code", "BOX"),
+        "sizex": float(c["sizex"]),
+        "sizey": float(c["sizey"]),
+        "sizez": float(c["sizez"]),
+        "weight": float(c.get("weight", 0)),
+        "quantity": int(c.get("quantity", 1)),
+        "strength": int(c.get("strength", 100)),
+        "pallet_face": c.get("pallet_face", "xy"),
+        "interlocking_type": c.get("interlocking_type", "mirror"),
+    } for c in cases_data]
+
+    overhang = float(data.get("overhang", 5.0))
+    pallet = Pallet(pallet_size, max_weight)
+    result = pack_pallet(pallet, validated_cases, overhang=overhang)
+    pallet_result = result.to_dict()
+
+    config = data.get("trajectory_config", None)
+    trajectory = generate_trajectory(pallet_result, config)
+    csv_content = export_trajectory_csv(trajectory)
+
+    return jsonify({"csv": csv_content, "total_waypoints": trajectory["total_waypoints"]})
 
 
 @app.route("/api/export-csv", methods=["POST"])
