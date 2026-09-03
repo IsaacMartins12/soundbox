@@ -2,7 +2,7 @@
 Envio das coordenadas de paletizacao para as variaveis de posicao (P) do YRC1000.
 
 Pega o resultado do calculo (caixas com place_x, place_y, place_z em cm) e
-escreve cada caixa em uma variavel P sequencial, comecando em P110.
+escreve cada caixa em uma variavel P sequencial, comecando em P110 (default).
 
     caixa 1 (index 1) -> P110
     caixa 2 (index 2) -> P111
@@ -11,64 +11,63 @@ escreve cada caixa em uma variavel P sequencial, comecando em P110.
 
 Com inicio em P110, cabem ate 18 caixas (P110 a P127).
 
+Os valores default (IP, porta, faixa de P, orientacao) vem de config.py.
+
 Conversao de unidades:
     - O calculo esta em CENTIMETROS. O robo trabalha em MILIMETROS.
     - Multiplicamos por 10 (cm -> mm). O hses_client converte mm -> μm.
 
 Uso programatico:
     from robot.pallet_sender import send_pallet_to_robot
-    resultado = send_pallet_to_robot(cases, ip="192.168.0.80", start_pvar=120)
+    resultado = send_pallet_to_robot(cases)
 """
+import config
 from .hses_client import HSESClient
 
 
-# Numero da primeira variavel P a ser usada
-DEFAULT_START_PVAR = 110
-
-# Orientacao padrao da ferramenta (graus). O robo pega por cima, entao a
-# garra aponta para baixo -> Rx = 180. Ajustavel conforme calibracao.
-DEFAULT_RX = 180.0
-DEFAULT_RY = 0.0
-DEFAULT_RZ = 0.0
-
-
-def send_pallet_to_robot(cases, ip="192.168.0.80", start_pvar=DEFAULT_START_PVAR,
-                         coord_system=HSESClient.COORD_ROBOT, tool_no=0,
-                         rx=DEFAULT_RX, ry=DEFAULT_RY, rz=DEFAULT_RZ):
+def send_pallet_to_robot(cases, ip=None, start_pvar=None,
+                         coord_system=None, tool_no=None,
+                         rx=None, ry=None, rz=None):
     """Escreve as coordenadas de cada caixa em variaveis P sequenciais.
+
+    Os parametros default vem de config.py; passe valores explicitos apenas
+    para sobrescrever pontualmente.
 
     :param cases: lista de caixas (dicts com place_x, place_y, place_z em cm)
     :param ip: IP do controlador YRC1000
-    :param start_pvar: numero da primeira variavel P (default 110)
+    :param start_pvar: numero da primeira variavel P
     :param coord_system: 16=base, 17=robo, 18=usuario
     :param tool_no: numero da ferramenta
     :param rx, ry, rz: orientacao da garra em graus
     :return: dict com resumo do envio (enviadas, falhas, detalhes)
     """
-    robot = HSESClient(ip)
+    # Aplica defaults do config quando nao especificado
+    ip = ip if ip is not None else config.ROBOT_IP
+    start_pvar = start_pvar if start_pvar is not None else config.ROBOT_START_PVAR
+    coord_system = coord_system if coord_system is not None else config.ROBOT_COORD_SYSTEM
+    tool_no = tool_no if tool_no is not None else config.ROBOT_TOOL_NO
+    rx = rx if rx is not None else config.ROBOT_RX
+    ry = ry if ry is not None else config.ROBOT_RY
+    rz = rz if rz is not None else config.ROBOT_RZ
+
+    robot = HSESClient(ip, timeout=config.ROBOT_TIMEOUT, port=config.ROBOT_PORT)
 
     enviadas = 0
     falhas = 0
     detalhes = []
 
-    # Ordena por index para garantir a sequencia P120, P121, ...
+    # Ordena por index para garantir a sequencia P110, P111, ...
     cases_ordenadas = sorted(cases, key=lambda c: c.get("index", 0))
-
-    if len(cases_ordenadas) > 128:
-        return {
-            "success": False,
-            "error": f"{len(cases_ordenadas)} caixas excede o limite de variaveis P (128).",
-        }
 
     for i, case in enumerate(cases_ordenadas):
         pvar = start_pvar + i
 
-        if pvar > 127:
+        if pvar > config.ROBOT_MAX_PVAR:
             detalhes.append({
                 "index": case.get("index"),
                 "pvar": pvar,
                 "ok": False,
-                "motivo": "Numero de P excede 127",
+                "motivo": f"Numero de P excede o limite ({config.ROBOT_MAX_PVAR})",
             })
             falhas += 1
             continue

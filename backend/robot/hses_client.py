@@ -48,9 +48,10 @@ class HSESClient:
 
     ERROR_SUCCESS = 0
 
-    def __init__(self, ip, timeout=2.0):
+    def __init__(self, ip, timeout=2.0, port=None):
         self.ip = ip
         self.timeout = timeout
+        self.port = port if port is not None else self.PORT_ROBOT_CONTROL
         self.errno = 0
 
     # ------------------------------------------------------------------
@@ -91,7 +92,7 @@ class HSESClient:
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         sock.settimeout(self.timeout)
         try:
-            sock.connect((self.ip, self.PORT_ROBOT_CONTROL))
+            sock.connect((self.ip, self.port))
             sock.sendall(packet)
             ans, _ = sock.recvfrom(512)
         except (socket.timeout, OSError) as e:

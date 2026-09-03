@@ -47,14 +47,27 @@ python app.py
 Abra o navegador em `http://localhost:5000` (o Flask serve o frontend na
 mesma porta da API).
 
-### Variáveis de ambiente (opcionais)
+### Configuração
 
-| Variável       | Default   | Descrição                                              |
-|----------------|-----------|--------------------------------------------------------|
-| `FLASK_DEBUG`  | desligado | `1`/`true` liga o modo debug do Flask                  |
-| `HOST`         | `0.0.0.0` | Host de bind                                           |
-| `PORT`         | `5000`    | Porta                                                  |
-| `CORS_ORIGINS` | (vazio)   | Origens permitidas (separadas por vírgula). Sem valor, CORS não é habilitado |
+Os valores importantes (IP do robô, porta, faixa de variáveis P, orientação da
+garra, etc.) ficam centralizados em `backend/config.py`. Basta editar lá para
+mudar o comportamento, sem mexer no resto do código. Cada valor também pode ser
+sobrescrito por variável de ambiente:
+
+| Variável             | Default        | Descrição                                              |
+|----------------------|----------------|--------------------------------------------------------|
+| `FLASK_DEBUG`        | desligado      | `1`/`true` liga o modo debug do Flask                  |
+| `HOST`               | `0.0.0.0`      | Host de bind                                           |
+| `PORT`               | `5000`         | Porta do servidor                                      |
+| `CORS_ORIGINS`       | (vazio)        | Origens permitidas (separadas por vírgula). Sem valor, CORS não é habilitado |
+| `ROBOT_IP`           | `192.168.0.80` | IP do controlador YRC1000                              |
+| `ROBOT_PORT`         | `10040`        | Porta HSES (robot control)                             |
+| `ROBOT_TIMEOUT`      | `2.0`          | Timeout de resposta do robô (s)                        |
+| `ROBOT_START_PVAR`   | `110`          | Primeira variável P usada no envio                     |
+| `ROBOT_MAX_PVAR`     | `127`          | Última variável P disponível                           |
+| `ROBOT_COORD_SYSTEM` | `17`           | Sistema de coordenadas (16=base 17=robô 18=usuário)    |
+| `ROBOT_TOOL_NO`      | `0`            | Número da ferramenta                                   |
+| `ROBOT_RX/RY/RZ`     | `180/0/0`      | Orientação padrão da garra (graus)                     |
 
 ## Fluxo de uso
 

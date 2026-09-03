@@ -18,10 +18,16 @@ Pre-requisitos:
     - Firewall liberado para UDP na porta 10040.
 """
 import argparse
+import os
+import sys
 
 from hses_client import HSESClient
 
-DEFAULT_IP = "192.168.0.80"
+# Permite importar config.py (que fica em backend/, um nivel acima)
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+import config
+
+DEFAULT_IP = config.ROBOT_IP
 
 
 def cmd_register(args):
@@ -125,16 +131,21 @@ def build_parser():
     # position
     p_pos = sub.add_parser("position", help="Testa escrita/leitura de variavel de posicao (P)")
     p_pos.add_argument("--ip", default=DEFAULT_IP, help=f"IP do controlador (default: {DEFAULT_IP})")
-    p_pos.add_argument("--pvar", type=int, default=110, help="Numero da variavel P (default: 110)")
+    p_pos.add_argument("--pvar", type=int, default=config.ROBOT_START_PVAR,
+                       help=f"Numero da variavel P (default: {config.ROBOT_START_PVAR})")
     p_pos.add_argument("--x", type=float, default=800.0, help="X em mm (default: 800)")
     p_pos.add_argument("--y", type=float, default=-300.0, help="Y em mm (default: -300)")
     p_pos.add_argument("--z", type=float, default=520.0, help="Z em mm (default: 520)")
-    p_pos.add_argument("--rx", type=float, default=180.0, help="Tx em graus (default: 180)")
-    p_pos.add_argument("--ry", type=float, default=0.0, help="Ty em graus (default: 0)")
-    p_pos.add_argument("--rz", type=float, default=0.0, help="Tz em graus (default: 0)")
-    p_pos.add_argument("--coord", type=int, default=17,
-                       help="Sistema de coord: 16=base 17=robo 18=usuario (default: 17)")
-    p_pos.add_argument("--tool", type=int, default=0, help="Numero da ferramenta (default: 0)")
+    p_pos.add_argument("--rx", type=float, default=config.ROBOT_RX,
+                       help=f"Tx em graus (default: {config.ROBOT_RX})")
+    p_pos.add_argument("--ry", type=float, default=config.ROBOT_RY,
+                       help=f"Ty em graus (default: {config.ROBOT_RY})")
+    p_pos.add_argument("--rz", type=float, default=config.ROBOT_RZ,
+                       help=f"Tz em graus (default: {config.ROBOT_RZ})")
+    p_pos.add_argument("--coord", type=int, default=config.ROBOT_COORD_SYSTEM,
+                       help=f"Sistema de coord: 16=base 17=robo 18=usuario (default: {config.ROBOT_COORD_SYSTEM})")
+    p_pos.add_argument("--tool", type=int, default=config.ROBOT_TOOL_NO,
+                       help=f"Numero da ferramenta (default: {config.ROBOT_TOOL_NO})")
     p_pos.set_defaults(func=cmd_position)
 
     return parser

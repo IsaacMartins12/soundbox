@@ -3,7 +3,8 @@ Rota de envio das coordenadas de paletizacao para o robo (variaveis P via HSES).
 """
 from flask import Blueprint, request, jsonify
 
-from robot.pallet_sender import send_pallet_to_robot, DEFAULT_START_PVAR
+import config
+from robot.pallet_sender import send_pallet_to_robot
 
 robot_bp = Blueprint("robot", __name__, url_prefix="/api")
 
@@ -14,6 +15,9 @@ def send_to_robot():
     Envia as coordenadas das caixas calculadas para as variaveis P do robo.
 
     Escreve caixa 1 -> P110, caixa 2 -> P111, ... (sequencial).
+
+    Todos os parametros abaixo sao opcionais; sem eles, usa os defaults de
+    config.py.
 
     Body JSON esperado:
     {
@@ -38,13 +42,14 @@ def send_to_robot():
         if "place_x" not in c or "place_y" not in c or "place_z" not in c:
             return jsonify({"error": "Caixas sem coordenadas de place (place_x/y/z)"}), 400
 
-    ip = data.get("ip", "192.168.0.80")
-    start_pvar = int(data.get("start_pvar", DEFAULT_START_PVAR))
-    coord_system = int(data.get("coord_system", 17))
-    tool_no = int(data.get("tool_no", 0))
-    rx = float(data.get("rx", 180.0))
-    ry = float(data.get("ry", 0.0))
-    rz = float(data.get("rz", 0.0))
+    # Parametros opcionais: usa config quando ausentes
+    ip = data.get("ip", config.ROBOT_IP)
+    start_pvar = int(data.get("start_pvar", config.ROBOT_START_PVAR))
+    coord_system = int(data.get("coord_system", config.ROBOT_COORD_SYSTEM))
+    tool_no = int(data.get("tool_no", config.ROBOT_TOOL_NO))
+    rx = float(data.get("rx", config.ROBOT_RX))
+    ry = float(data.get("ry", config.ROBOT_RY))
+    rz = float(data.get("rz", config.ROBOT_RZ))
 
     try:
         resultado = send_pallet_to_robot(
