@@ -1,2 +1,4 @@
+# Dependencias de producao (API Flask).
+# A comunicacao com o robo (HSES) usa apenas a biblioteca padrao (socket).
 flask==3.0.3
 flask-cors==5.0.0

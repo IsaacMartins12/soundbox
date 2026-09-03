@@ -1,9 +1,10 @@
 """
 Visualização em plano cartesiano das coordenadas de paletização.
-Mostra vista de cima (XY) e vista lateral (XZ) com as coordenadas numéricas.
+Mostra a vista superior (XY) de cada camada da pilha, com as coordenadas
+numéricas de place de cada caixa.
 
-Uso: python plot_coordinates.py
-Requer: matplotlib, backend Flask rodando em localhost:5000
+Uso: python scripts/plot_coordinates.py
+Requer: matplotlib, numpy, backend Flask rodando em localhost:5000
 """
 import json
 import urllib.request

@@ -1,0 +1,8 @@
+# Dependencias de desenvolvimento / ferramentas de diagnostico.
+# Instale com: pip install -r requirements-dev.txt
+# (inclui as de producao)
+-r requirements.txt
+
+# Usadas por scripts/plot_coordinates.py (visualizacao das camadas)
+matplotlib==3.11.1
+numpy==2.5.2

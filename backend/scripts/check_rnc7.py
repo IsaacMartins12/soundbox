@@ -1,7 +1,9 @@
 """
-Teste de coordenadas para o modelo RNC7.
-Roda com: python test_rnc7.py
-Requer: backend Flask rodando em localhost:5000 + pip install requests
+Script de diagnostico: consulta as coordenadas de place do modelo RNC7.
+
+Nao e um teste automatizado (pytest) - e uma ferramenta manual.
+Roda com: python scripts/check_rnc7.py
+Requer: backend Flask rodando em localhost:5000 (usa urllib, sem dependencias).
 """
 import json
 import urllib.request

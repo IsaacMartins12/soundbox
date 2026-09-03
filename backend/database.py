@@ -47,18 +47,19 @@ def init_db():
         )
     """)
 
-    # Migração: adiciona coluna pallet_face se não existir
+    # Migração: adiciona coluna pallet_face se não existir.
+    # OperationalError e esperado quando a coluna ja existe; outros erros sobem.
     try:
         conn.execute("ALTER TABLE box_models ADD COLUMN pallet_face TEXT DEFAULT 'xy'")
         conn.commit()
-    except:
+    except sqlite3.OperationalError:
         pass  # Coluna já existe
 
     # Migração: adiciona coluna interlocking_type se não existir
     try:
         conn.execute("ALTER TABLE box_models ADD COLUMN interlocking_type TEXT DEFAULT 'mirror'")
         conn.commit()
-    except:
+    except sqlite3.OperationalError:
         pass  # Coluna já existe
     conn.execute("""
         CREATE TABLE IF NOT EXISTS pallet_models (
