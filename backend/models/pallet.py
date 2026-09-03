@@ -1,6 +1,7 @@
 """
 Modelo do palete onde as caixas são posicionadas.
 """
+
 import functools
 import operator
 from collections import deque
@@ -43,8 +44,9 @@ class Pallet:
     def to_dict(self):
         """Serializa o palete e as caixas posicionadas para JSON."""
         cases_list = []
-        for case in self.cases:
+        for i, case in enumerate(self.cases):
             cases_list.append({
+                "index": i + 1,
                 "code": case.code,
                 "x": case.x,
                 "y": case.y,
@@ -54,6 +56,10 @@ class Pallet:
                 "sizez": case.sizez,
                 "weight": case.weight,
                 "rotated": case.rotated,
+                # Centro da face superior (ponto de place para o robô)
+                "place_x": round(case.x + case.sizex / 2, 2),
+                "place_y": round(case.y + case.sizey / 2, 2),
+                "place_z": round(case.z + case.sizez, 2),
             })
 
         return {
