@@ -314,3 +314,24 @@ footer {
         height: 400px;
     }
 }
+
+/* Status de envio ao robô */
+.robot-status {
+    margin: 10px 0;
+    padding: 10px 14px;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.robot-status-ok {
+    background-color: #e6f4ea;
+    color: #1e7e34;
+    border: 1px solid #b7e0c2;
+}
+
+.robot-status-error {
+    background-color: #fdecea;
+    color: #b02a37;
+    border: 1px solid #f5c2c7;
+}

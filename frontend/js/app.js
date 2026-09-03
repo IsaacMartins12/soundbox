@@ -8,6 +8,7 @@ document.addEventListener("DOMContentLoaded", () => {
     setupCasesManager();
     setupCalculation();
     setupExport();
+    setupSendRobot();
     setupBoxTypeToggle();
 });
 
@@ -415,6 +416,62 @@ async function exportCSV() {
     } catch (err) {
         alert("Erro ao exportar CSV.");
         console.error(err);
+    }
+}
+
+
+// ============================================================
+// Envio das coordenadas ao Robô (variáveis P via HSES)
+// ============================================================
+
+function setupSendRobot() {
+    const btn = document.getElementById("send-robot-btn");
+    if (btn) {
+        btn.addEventListener("click", sendToRobot);
+    }
+}
+
+async function sendToRobot() {
+    if (!lastResult || !lastResult.cases || !lastResult.cases.length) {
+        alert("Calcule o empacotamento primeiro.");
+        return;
+    }
+
+    const btn = document.getElementById("send-robot-btn");
+    const statusEl = document.getElementById("robot-status");
+
+    btn.disabled = true;
+    btn.textContent = "Enviando...";
+    statusEl.classList.remove("hidden", "robot-status-error", "robot-status-ok");
+    statusEl.textContent = "Enviando coordenadas para o robô...";
+
+    try {
+        const response = await fetch("/api/send-to-robot", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ cases: lastResult.cases }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok || data.success === false) {
+            statusEl.classList.add("robot-status-error");
+            const detalhe = data.error
+                ? data.error
+                : `Enviadas ${data.enviadas || 0} de ${data.total || 0}. Falhas: ${data.falhas || 0}.`;
+            statusEl.textContent = "⚠️ " + detalhe;
+        } else {
+            statusEl.classList.add("robot-status-ok");
+            statusEl.textContent =
+                `✓ ${data.enviadas} caixa(s) enviada(s) ao robô nas variáveis P${data.start_pvar}–P${data.end_pvar}.`;
+        }
+    } catch (err) {
+        statusEl.classList.add("robot-status-error");
+        statusEl.textContent = "⚠️ Erro de conexão com o servidor.";
+        console.error(err);
+    } finally {
+        btn.disabled = false;
+        btn.textContent = "Enviar ao Robô";
     }
 }
 
