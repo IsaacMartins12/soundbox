@@ -6,3 +6,6 @@
 # Usadas por scripts/plot_coordinates.py (visualizacao das camadas)
 matplotlib==3.11.1
 numpy==2.5.2
+
+# Testes automatizados
+pytest==9.1.1

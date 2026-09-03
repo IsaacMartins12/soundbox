@@ -119,6 +119,18 @@ Em `backend/scripts/` há ferramentas manuais de apoio (exigem o backend rodando
 - `plot_coordinates.py` — plota as camadas de paletização em plano cartesiano
   (requer `matplotlib`/`numpy`, instaláveis via `requirements-dev.txt`).
 
+## Testes
+
+Testes automatizados cobrem o núcleo do sistema (geometria da caixa, algoritmo
+de empacotamento e conversão de coordenadas para o robô). Não dependem do robô
+nem da rede.
+
+```bash
+cd backend
+pip install -r requirements-dev.txt
+python -m pytest
+```
+
 ## Algoritmo
 
 O empacotamento usa uma estratégia de grid que testa múltiplos arranjos

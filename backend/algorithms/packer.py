@@ -181,7 +181,6 @@ def pack_pallet(pallet, cases_input, overhang=5.0):
 
     # Orientação de paletização: qual face fica no chão
     pallet_face = item.get("pallet_face", "xy")
-    print(f"[DEBUG PACKER] raw=({raw_sizex},{raw_sizey},{raw_sizez}), pallet_face={pallet_face}, interlocking={interlocking_type}")
 
     if pallet_face == "xy":
         sizex, sizey, sizez = raw_sizex, raw_sizey, raw_sizez
@@ -192,7 +191,6 @@ def pack_pallet(pallet, cases_input, overhang=5.0):
     else:
         sizex, sizey, sizez = raw_sizex, raw_sizey, raw_sizez
 
-    print(f"[DEBUG PACKER] floor=({sizex},{sizey}), height={sizez}")
     weight = float(item.get("weight", 0))
     code = item.get("code", "BOX")
     strength = int(item.get("strength", 100))
