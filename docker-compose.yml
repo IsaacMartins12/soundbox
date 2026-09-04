@@ -1,0 +1,19 @@
+services:
+  soundbox:
+    build: .
+    image: soundbox-pallet-optimizer
+    container_name: soundbox
+    ports:
+      - "5000:5000"
+    volumes:
+      # Persiste o banco SQLite entre execucoes/recriacoes do container
+      - soundbox-data:/app/backend/data
+    environment:
+      # IP do robo Yaskawa (ajuste conforme a rede da celula)
+      ROBOT_IP: "192.168.0.80"
+      # Demais valores usam os defaults de config.py.
+      # Para habilitar CORS, defina CORS_ORIGINS, ex.: "http://outrohost:8080"
+    restart: unless-stopped
+
+volumes:
+  soundbox-data:

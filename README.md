@@ -47,6 +47,25 @@ python app.py
 Abra o navegador em `http://localhost:5000` (o Flask serve o frontend na
 mesma porta da API).
 
+### Com Docker (recomendado para rodar em outra máquina)
+
+Basta clonar o repositório e subir com Docker Compose — não precisa instalar
+Python nem dependências na máquina:
+
+```bash
+git clone https://github.com/IsaacMartins12/soundbox.git
+cd soundbox/project
+docker compose up --build
+```
+
+Acesse `http://localhost:5000`. O banco SQLite é persistido em um volume
+(`soundbox-data`), então os dados sobrevivem entre reinícios do container.
+
+Para ajustar o IP do robô ou outras configurações, edite as variáveis em
+`docker-compose.yml` (ex.: `ROBOT_IP`) ou o arquivo `backend/config.py`.
+
+Para parar: `docker compose down`.
+
 ### Configuração
 
 Os valores importantes (IP do robô, porta, faixa de variáveis P, orientação da

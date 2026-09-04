@@ -1,0 +1,26 @@
+# Ambiente e cache
+venv/
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+
+# Banco local (o container usa volume proprio)
+*.db
+backend/data/
+
+# Git e IDE
+.git/
+.gitignore
+.vscode/
+.idea/
+
+# Artefatos gerados
+*_coordinates.json
+*.png
+
+# Workspace ROS (nao faz parte do backend)
+ros2_ws/
+
+# Docs
+*.md

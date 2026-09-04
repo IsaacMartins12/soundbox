@@ -5,7 +5,15 @@ import sqlite3
 import os
 import json
 
-DB_PATH = os.path.join(os.path.dirname(__file__), "soundbox.db")
+# Caminho do banco: usa DB_PATH do ambiente (util no Docker, com volume) ou
+# um arquivo local por padrao.
+DB_PATH = os.environ.get(
+    "DB_PATH",
+    os.path.join(os.path.dirname(__file__), "soundbox.db"),
+)
+
+# Garante que a pasta do banco exista (ex.: /app/backend/data no container)
+os.makedirs(os.path.dirname(os.path.abspath(DB_PATH)), exist_ok=True)
 
 
 def get_connection():
