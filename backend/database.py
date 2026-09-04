@@ -93,16 +93,27 @@ def init_db():
 
 def _insert_defaults(conn):
     """Insere modelos padrão."""
+    # Colunas: name, code, type, sizex, sizey, sizez, weight, strength, quantity,
+    #          comp_total, largura, alt_vertical, alt_perpendicular, comp_braco,
+    #          l_orientation, pallet_face, interlocking_type,
+    #          pallet_sizex, pallet_sizey, pallet_sizez,
+    #          pallet_max_weight, overhang, notes
     defaults = [
-        ("S60TR Caixa L (em pé)", "S60TR-L", "l-shape", None, None, None, 8, None, 10, 91.4, 26.3, 43.5, 14.1, 45.7, "vertical", 100, 120, 200, 1200, 12, "Caixa formato L em pé"),
-        ("S60T Caixa L (deitada)", "S60T-L", "l-shape", None, None, None, 8, None, 10, 92.4, 27.6, 44.5, 14.1, 46.2, "horizontal", 100, 120, 200, 1200, 12, "Caixa formato L deitada"),
-        ("CL87", "CL87", "regular", 91.9, 52, 45.3, 16, 5, 10, None, None, None, None, None, None, 100, 120, 200, 1200, 24, "Par de caixas L encaixadas"),
+        ("S60TR Caixa L (em pé)", "S60TR-L", "l-shape", None, None, None, 8, 10, 20, 91.4, 26.3, 43.5, 14.1, 45.7, "vertical", "xy", "mirror", 100, 120, 200, 1200, 12, "Caixa formato L em pé"),
+        ("S60T Caixa L (deitada)", "S60T-L", "l-shape", None, None, None, 8, 10, 24, 92.4, 27.6, 44.5, 14.1, 46.2, "horizontal", "xy", "mirror", 100, 120, 200, 1200, 12, "Caixa formato L deitada"),
+        ("CL87", "CL87", "regular", 91.9, 45.3, 52.0, 16, 5, 9, None, None, None, None, None, "vertical", "xy", "mirror", 100, 120, 200, 1200, 18, ""),
+        ("SH5A", "SH5A", "regular", 110.9, 26.6, 51.5, 2, 10, 12, None, None, None, None, None, "vertical", "xy", "mirror", 100, 120, 200, 1200, 10, ""),
+        ("RNC7", "RNC7", "regular", 86.1, 39.6, 43.6, 10, 10, 12, None, None, None, None, None, "vertical", "xy", "mirror", 100, 120, 200, 1200, 20, ""),
+        ("S90TY", "S90TY", "regular", 134.5, 57.2, 26.1, 5, 10, 12, None, None, None, None, None, "vertical", "xz", "mirror", 100, 120, 200, 1200, 15, ""),
+        ("RNC9", "RNC9", "regular", 114.0, 39.6, 48.7, 10, 10, 9, None, None, None, None, None, "vertical", "xy", "alternate", 100, 120, 200, 1200, 20, ""),
+        ("S40T", "S40T", "regular", 77.6, 41.9, 22.3, 10, 10, 24, None, None, None, None, None, "horizontal", "xz", "mirror", 100, 120, 200, 1200, 10, ""),
     ]
     conn.executemany("""
         INSERT INTO box_models (name, code, type, sizex, sizey, sizez, weight, strength, quantity,
                                 comp_total, largura, alt_vertical, alt_perpendicular, comp_braco,
-                                l_orientation, pallet_sizex, pallet_sizey, pallet_sizez, pallet_max_weight, overhang, notes)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                                l_orientation, pallet_face, interlocking_type,
+                                pallet_sizex, pallet_sizey, pallet_sizez, pallet_max_weight, overhang, notes)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     """, defaults)
 
     pallet_defaults = [
